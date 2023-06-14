@@ -1,0 +1,27 @@
+{
+  "name": "tg-bote",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "Anti-996",
+  "dependencies": {
+    "big-integer": "^1.6.51",
+    "dedent-js": "^1.0.1",
+    "mongoose": "^6.7.2",
+    "prompt-sync": "^4.2.0",
+    "sharp": "^0.32.1",
+    "telegraf": "^4.10.0",
+    "telegram": "^2.17.4",
+    "ts-node": "^10.9.1",
+    "types": "^0.1.1",
+    "typescript": "^4.8.4"
+  },
+  "scripts": {
+    "start": "ts-node index.ts",
+    "startnext": "ts-node-dev --transpile-only --respawn --inspect=4321 bootstrap.ts"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/prompt-sync": "^4.2.0",
+    "ts-node-dev": "^2.0.0"
+  }
+}
