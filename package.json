@@ -1,13 +1,16 @@
 {
   "name": "tg-bote",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "license": "Anti-996",
   "description": "Plugin style telegram bot framework based on telegraf",
   "files": [
     "dist/**/*.js",
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "typings/**/*.d.ts",
+    "typings/**/*.d.ts.map"
   ],
   "main": "./dist/index.js",
+  "types": "./typings/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Lama3L9R/tg-bote"
