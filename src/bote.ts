@@ -1,6 +1,7 @@
 
 import mongoose from 'mongoose'
 import { Telegraf } from 'telegraf'
+import { Events } from './events'
 
 import Logging from './logging'
 import { BotePermissionManagerImpl } from './permission/permission-manager'
@@ -51,6 +52,8 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
     Logging.info("Loading plugins...")
 
     await PluginManager.loadPlugins(config.pluginsFolder ?? "./plugins")
+    
+    await Events.onStartup.call(null, null)
 
     telegraf.catch((err, ctx) => {
         if (!err) {
@@ -62,8 +65,12 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
 
     telegraf.on(["text"], getMasterDispatcher())
 
+    await Events.onPostStartup.call(null, null)
+
     await telegraf.launch()
     Logging.info(`Bote launched with token: ${replaceRange(token.split(""), 20, 30, "*").join("")}`)
+
+    await Events.onFinalization.call(null, null)
 }
 
 function replaceRange <T> (arr: T[], begin: number, end: number, data: T): T[] {

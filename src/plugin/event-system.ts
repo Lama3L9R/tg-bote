@@ -37,10 +37,12 @@ export class EventManager<EventArg, Sender> {
         this.handlers = this.handlers.filter(it => uids.indexOf(it.uid) === -1)
     }
 
-    async call(source: Sender, args: EventArg) {
+    async call(source: Sender, args: EventArg): Promise<EventArg> {
         for (const i of this.handlers) {
             await i.invoke(args, source)
         }
+
+        return args
     }
 
     private assignUID(): number {

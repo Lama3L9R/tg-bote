@@ -7,17 +7,17 @@
 
 ## 部署指南
 
-你需要创建一个 `Node` 项目并将 `tg-bote`、`tsc` 和 `ts-node` 安装到你的项目
+你需要创建一个 `Node` 项目并将 `tg-bote`、`typescript` 和 `ts-node` 安装到你的项目
 
 ```
-$ yarn add file:/path/to/tg-bote
+$ yarn add tg-bote typescript ts-node
 ```
 
 然后创建一个 `bootstrap.ts` 文件作为你的程序入口点，并填写 `launch` 函数的参数
 ```typescript
-import { launch } from 'bote'
+import I from 'tg-bote'
 
-launch("<MongoDB Connection String>", "<TG Bot Token>")
+I.launch("<MongoDB Connection String>", "<TG Bot Token>")
 
 export { }
 ```
@@ -29,9 +29,9 @@ export { }
 对着下面这个模板干就完了
 
 ```typescript
-import * as I from '../src/bote'
-import { PluginDescription } from '../src/plugin'
-import { Command } from '../src/plugin/command/command'
+import I from 'tg-bote'
+import { PluginDescription } from 'tg-bote/plugin'
+import { Command } from 'tg-bote/plugin/command/command'
 
 export const plugin: PluginDescription = {
     author: "lama",

@@ -1,9 +1,17 @@
 {
   "name": "tg-bote",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "Anti-996",
-  "files": [ "/dist" ],
+  "description": "Plugin style telegram bot framework based on telegraf",
+  "files": [
+    "./dist/**/*.js",
+    "./src/**/*.ts"
+  ],
   "main": "./dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Lama3L9R/tg-bote"
+  },
   "dependencies": {
     "big-integer": "^1.6.51",
     "dedent-js": "^1.0.1",
