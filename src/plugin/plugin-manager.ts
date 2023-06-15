@@ -32,5 +32,4 @@ class PluginManagerImpl implements IPluginManager {
     }
 } 
 
-const PluginManager = new PluginManagerImpl()
-export default PluginManager
+export const PluginManager = new PluginManagerImpl()

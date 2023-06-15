@@ -5,7 +5,7 @@ import { Context, Middleware, NarrowedContext } from "telegraf";
 
 import { Update } from "telegraf/typings/core/types/typegram";
 import { MountMap } from "telegraf/typings/telegram-types";
-import { default as plm } from './plugin-manager';
+export { PluginManager } from './plugin-manager'
 import { Command } from './command/command'
 import { Logger } from '../logging/logger'
 import Logging from '../logging'
@@ -72,5 +72,3 @@ export interface BoteCommandContext {
     replyWithMarkdownV2(msg: string): Promise<void>
     
 }
-
-export const PluginManager = plm

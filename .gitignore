@@ -4,3 +4,4 @@ plugins
 node_modules
 yarn-error.log
 bootstrap.ts
+dist

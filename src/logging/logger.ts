@@ -64,7 +64,7 @@ export class Logger {
     }
 
     private write(text: any) {
-        this.io.write(text)
+        this.io.write(text + "\n")
     }
 
     private getTime() {
