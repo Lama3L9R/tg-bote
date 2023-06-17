@@ -7,7 +7,7 @@
 
 ## 部署指南
 
-你需要创建一个 `Node` 项目并将 `tg-bote`、`typescript` 和 `ts-node` 安装到你的项目
+你需要创建一个 `Node` 项目并将 `tg-bote`、`typescript` 和 `ts-node-dev` 安装到你的项目
 
 ```
 $ yarn add tg-bote typescript ts-node
@@ -22,7 +22,7 @@ I.launch("<MongoDB Connection String>", "<TG Bot Token>")
 export { }
 ```
 
-然后使用 `ts-node` 启动 `bootstrap.ts` 即可
+然后使用 `ts-node-dev` 启动 `bootstrap.ts` 即可
 
 ## 插件开发指南
 
