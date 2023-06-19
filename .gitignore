@@ -3,6 +3,8 @@ logs
 plugins
 node_modules
 yarn-error.log
-bootstrap.ts
-dist
-typings
+
+**/*.js
+**/*.js.map
+**/*.d.ts
+**/*.ts.map
