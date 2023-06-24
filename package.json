@@ -5,6 +5,7 @@
   "description": "Plugin style telegram bot framework based on telegraf",
   "main": "./index.js",
   "types": "./index.d.ts",
+  "files": ["**/*.js", "**/*.js.map", "**/*.ts", "**/*.d.ts", "**/*.d.ts.map"],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Lama3L9R/tg-bote"
