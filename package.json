@@ -5,7 +5,13 @@
   "description": "Plugin style telegram bot framework based on telegraf",
   "main": "./index.js",
   "types": "./index.d.ts",
-  "files": ["**/*.js", "**/*.js.map", "**/*.ts", "**/*.d.ts", "**/*.d.ts.map"],
+  "files": [
+    "**/*.js",
+    "**/*.js.map",
+    "**/*.ts",
+    "**/*.d.ts",
+    "**/*.d.ts.map"
+  ],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Lama3L9R/tg-bote"
@@ -25,6 +31,7 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@types/prompt-sync": "^4.2.0"
+    "@types/prompt-sync": "^4.2.0",
+    "ts-node": "^10.9.1"
   }
 }

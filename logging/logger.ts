@@ -26,7 +26,7 @@ export class Logger {
     }
 
     event(event: string, msg: any, trigger: any) {
-        this.write(`${this.makePrefix("Event")} : <${event}> from ${trigger} -> ${msg}`)
+        this.write(`${this.makePrefix("Event")} : <${event}> from ${(trigger + "").padEnd(25, " ")} -> ${msg}`)
     }
 
     info(msg: any) {
@@ -54,6 +54,10 @@ export class Logger {
         writeErr(msg)
     }
 
+    getIO() {
+        return this.io
+    }
+
     private makePrefix(level: string) {
         if (this.registeredLevels.indexOf(level) === -1) {
             throw new Error("No such level!")
@@ -64,7 +68,7 @@ export class Logger {
     }
 
     private write(text: any) {
-        this.io.write(text + "\n")
+        this.io.writeLine(text)
     }
 
     private getTime() {
@@ -75,7 +79,7 @@ export class Logger {
 }
 
 export interface LoggerIO {
-    write(data: any): void;
+    writeLine(data: any): void;
 }
 
 export class MasterLoggerIO implements LoggerIO {
@@ -85,13 +89,13 @@ export class MasterLoggerIO implements LoggerIO {
         this.master = master
     }
 
-    write(data: any): void {
-
+    writeLine(data: any): void {
+        this.master.getIO().writeLine(data)
     }
 }
 
 export class ConsoleLoggerIO implements LoggerIO {
-    write(data: any): void {
+    writeLine(data: any): void {
         if (data instanceof Error) {
             console.error(data)
         } else {
@@ -120,8 +124,8 @@ export class FileLoggerIO implements LoggerIO {
         this.dest = fs.openSync(path.join(folder.toString(), "latest.log"), "w+")
     }
 
-    write(data: any): void {
-        fs.writeFileSync(this.dest, data)
+    writeLine(data: any): void {
+        fs.writeFileSync(this.dest, data + "\n")
     }
 }
 
@@ -133,7 +137,7 @@ export class IOMux implements LoggerIO {
         this.ios = ios
     }
     
-    write(data: any): void {
-        this.ios.forEach(it => it.write(data))
+    writeLine(data: any): void {
+        this.ios.forEach(it => it.writeLine(data))
     }
 }

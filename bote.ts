@@ -53,6 +53,7 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
 
     await PluginManager.loadPlugins(config.pluginsFolder ?? "./plugins")
     
+    Logging.info("Invoke startup event")
     await Events.onStartup.call(null, null)
 
     telegraf.catch((err, ctx) => {
@@ -65,8 +66,10 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
 
     telegraf.on(["text"], getMasterDispatcher())
 
+    Logging.info("Invoke postStartup event")
     await Events.onPostStartup.call(null, null)
 
+    Logging.info("Connecting to Telegram Bot API...")
     await telegraf.launch()
     Logging.info(`Bote launched with token: ${replaceRange(token.split(""), 20, 30, "*").join("")}`)
 
