@@ -71,12 +71,22 @@ export class BoteMasterDispatcher implements MiddlewareObj<TelegrafCommandContex
                 Logging.event("CmdDispatch", textReal.join(""), `${ctx.message.chat.id}:${ctx.message.from.id}`)
             }
 
-            return this.commands[event.command].dispatch(event.args, ctx)
+            try {
+                return await this.commands[event.command].dispatch(event.args, ctx)
+            } catch(err: any) {
+                Logging.error(err)
+            }
+
+            return null
         }
     }
 
     register(cmd: Command<any>) {
         this.commands[cmd.getName()] = cmd
+    }
+
+    deRegister(...cmd: string[]) {
+        cmd.forEach(it => delete this.commands[it])
     }
 }
 

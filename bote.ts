@@ -5,7 +5,7 @@ import { Events } from './events'
 
 import Logging from './logging'
 import { BotePermissionManagerImpl } from './permission/permission-manager'
-import { PluginManager } from './plugin'
+import { IPluginManager, PluginManager } from './plugin'
 import { BoteMasterDispatcher } from './plugin/command/command-telegraf-middleware'
 
 export type BoteConfig = {
@@ -28,6 +28,10 @@ export const getLogger = Logging.getLogger
 
 export function getPermissionManager() {
     return permissionManager
+}
+
+export function getPluginManager(): IPluginManager {
+    return PluginManager
 }
  
 export async function launch(mongodb: string, token: string, config: BoteConfig = { }) {
@@ -73,6 +77,7 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
     await telegraf.launch()
     Logging.info(`Bote launched with token: ${replaceRange(token.split(""), 20, 30, "*").join("")}`)
 
+    ;(globalThis as any)["I"] = module.exports
     await Events.onFinalization.call(null, null)
 }
 

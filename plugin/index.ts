@@ -36,7 +36,10 @@ export class BotePlugin {
     }
  
     getUniqueIdentifier() {
-        return createHash("SHA1").update(JSON.stringify(this.plugin)).digest().toString("hex").split("").splice(8, 0, "-").join()
+        const chunks = createHash("SHA1").update(JSON.stringify(this.plugin)).digest().toString("hex").split("")
+        chunks.splice(8, 0, "-")
+
+        return chunks.join("")
     }
 
     getLogger() {
@@ -50,6 +53,11 @@ export type MaybePromise<T> = Promise<T> | T
 export interface IPluginManager {
     loadPlugins(dir: string): Promise<void>
     getPlugin(name: string): BotePlugin | null
+    unloadPlugin(name: string): Promise<void>
+    loadPlugin(dir: string, name: string): Promise<BotePlugin | void>
+    loadFilePlugin(file: string): Promise<BotePlugin | void>
+    getAllPlugins(): BotePlugin[]
+    reloadAll(): Promise<void>
 }
 
 export interface RegisteredCommand <RTN> {
