@@ -25,6 +25,11 @@ class PluginManagerImpl implements IPluginManager {
     async unloadPlugin(name: string) {
         const plugin = this.getPlugin(name)
         if (plugin) {
+            if (plugin.plugin.hidden) {
+                Logging.info("Unload plugin operation rejected! Reason: Attempt unload system plugin " + name)
+                return
+            }
+
             await Events.onRequestUnload.call(this, plugin.getFullName())
             
             const delEntry = require.cache[path.resolve(plugin.file + "")]!!.exports.plugin as PluginDescription
@@ -32,7 +37,7 @@ class PluginManagerImpl implements IPluginManager {
             this.plugins.delete(plugin.getUniqueIdentifier())
             delete require.cache[path.resolve(plugin.file + "")]
 
-            Logging.info(`Unloaded ${delEntry.hidden ? "system" : "user"} plugin @${delEntry.author}:${delEntry.name}(${delEntry.version})`)
+            Logging.info(`Unloaded user plugin @${delEntry.author}:${delEntry.name}(${delEntry.version})`)
         } else {
             throw new Error("No such plugin")
         }
@@ -67,11 +72,17 @@ class PluginManagerImpl implements IPluginManager {
 
     async reloadAll() {
         const files: string[] = []
+        const plugins: string[] = []
         for (const i of this.plugins.values()) {
+            if (i.plugin.hidden) {
+                Logging.info("Unload plugin operation rejected! Reason: Attempt unload system plugin " + i.getFullName())
+                continue
+            }
+            plugins.push(i.getUniqueIdentifier())
             files.push(i.file + "")
         }
 
-        await Promise.all(Array.from(this.plugins.keys()).map(it => {
+        await Promise.all(plugins.map(it => {
             return this.unloadPlugin(it)
         }))
 
