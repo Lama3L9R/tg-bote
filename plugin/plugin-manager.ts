@@ -49,6 +49,10 @@ class PluginManagerImpl implements IPluginManager {
     }
 
     async loadFilePlugin(file: string) {
+        if (file.endsWith(".disable")) {
+            Logging.info("Load plugin operation rejected! Reason: Attempt load disabled plugin" + file)
+            return
+        }
         const fullPath = path.join(file)
         if (!fs.lstatSync(fullPath).isFile()) {
             return 
