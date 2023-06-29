@@ -26,11 +26,15 @@ export class EventManager<EventArg, Sender> {
     private handlers: EventHandler<EventArg, Sender>[] = []
 
     subscribe(...fns: EventHandlerFn<EventArg, Sender>[]) {
-        this.handlers.push(...fns.map((it, i) => new EventHandler(it, this.assignUID(), 10 + i)))
+        const id = this.assignUID()
+        this.handlers.push(...fns.map((it, i) => new EventHandler(it, id, 10 + i)))
+        return id
     }
 
     subscribePrior(priority: number, ...fns: EventHandlerFn<EventArg, Sender>[]) {
-        this.handlers.push(...fns.map((it, i) => new EventHandler(it, this.assignUID(), priority + i)))
+        const id = this.assignUID()
+        this.handlers.push(...fns.map((it, i) => new EventHandler(it, id, priority + i)))
+        return id
     }
 
     unsubscribe(...uids: number[]) {
