@@ -73,7 +73,7 @@ export class Logger {
 
     private getTime() {
         const d = new Date()
-        return `${d.getFullYear()}-${d.getMonth()}-${d.getDay()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`
+        return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`
     }
 
 }
