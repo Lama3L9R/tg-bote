@@ -42,10 +42,7 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
     await permissionManager.sync()
 
     const task = async () => {
-        Logging.info(`Synchronizing permissions to database`)
-        await permissionManager.save()
         await permissionManager.sync()
-        Logging.info(`Synchronization complete`)
 
         setTimeout(task, 60 * 1000)
     }

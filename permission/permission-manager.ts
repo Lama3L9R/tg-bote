@@ -1,13 +1,13 @@
 import mongoose from 'mongoose'
+import Logging from '../logging'
 
 export interface IPermissionManager {
-    check(userIdentifier: string, node: string): boolean
-    grant(userIdentifier: string, node: string): void
-    revoke(userIdentifier: string, node: string): void
-    list(userIdentifier: string): string[]
+    check(userIdentifier: string, node: string): Promise<boolean>
+    grant(userIdentifier: string, node: string): Promise<void>
+    revoke(userIdentifier: string, node: string): Promise<void>
+    list(userIdentifier: string): Promise<string[]>
     save(): Promise<void>
     sync(): Promise<void>
-    diff(): number | null
 }
 
 const Permissions = mongoose.model("userpermissions", new mongoose.Schema({
@@ -16,88 +16,84 @@ const Permissions = mongoose.model("userpermissions", new mongoose.Schema({
 }))
 
 export class BotePermissionManagerImpl implements IPermissionManager {
-    private userPermissionsCache: { [key: string]: string[] } = {}
-    private delta: string[] = []
-    private creations: string[] = []
     private defaultPermissions: string[]
 
     constructor(defaultPermissions: string[] = []) {
         this.defaultPermissions = defaultPermissions
     }
 
-    check(userIdentifier: string, node: string): boolean {
-        if (userIdentifier in this.userPermissionsCache) {
-            for (const i of this.userPermissionsCache[userIdentifier]) {
-                const check = node.split(".")
-                const own = i.split(".")
-        
-                for (let i = 0; i < Math.min(check.length, own.length); i ++) {
-                    if (i >= check.length || i >= own.length) {
-                        return false
-                    }
-        
-                    if (own[i] === "*") {
-                        return true
-                    }
-        
-                    if (check[i] !== own[i]) {
-                        return false
-                    }
+    async check(userIdentifier: string, node: string): Promise<boolean> {
+        const user = await this.getUser(userIdentifier)
+        for (const i of user.permissions) {
+            const check = node.split(".")
+            const own = i.split(".")
+    
+            for (let i = 0; i < Math.min(check.length, own.length); i ++) {
+                if (i >= check.length || i >= own.length) {
+                    return false
                 }
-        
-                return true
+    
+                if (own[i] === "*") {
+                    return true
+                }
+    
+                if (check[i] !== own[i]) {
+                    return false
+                }
             }
-            return false
-        } else {
-            this.creations.push(userIdentifier)
-            this.userPermissionsCache[userIdentifier] = this.defaultPermissions
-            return this.check(userIdentifier, node)
+    
+            return true
         }
+        return false
     }
 
-    grant(userIdentifier: string, node: string): void {
-        if (!(userIdentifier in this.userPermissionsCache)) {
-            this.creations.push(userIdentifier)
-            this.userPermissionsCache[userIdentifier] = this.defaultPermissions
-            return this.grant(userIdentifier, node)
+    async grant(userIdentifier: string, node: string): Promise<void> {
+        if (!(await this.exist(userIdentifier))) {
+            await new Permissions({ userId: userIdentifier, permissions: this.defaultPermissions }).save()
         }
-
-        this.userPermissionsCache[userIdentifier].push(node)
-        this.delta.push(userIdentifier)
-    }
-
-    revoke(userIdentifier: string, node: string): void {
-        if (!(userIdentifier in this.userPermissionsCache)) {
-            this.creations.push(userIdentifier)
-            this.userPermissionsCache[userIdentifier] = this.defaultPermissions
-            return this.revoke(userIdentifier, node)
-        }
-
-        this.userPermissionsCache[userIdentifier] = this.userPermissionsCache[userIdentifier].filter(it => it !== node)
-        this.delta.push(userIdentifier)    
-    }
-
-    list(userIdentifier: string): string[] {
-        return this.userPermissionsCache[userIdentifier] ?? this.defaultPermissions
-    }
-
-    async save(): Promise<void> {
-        for (const i of this.creations) {
-            await (new Permissions({ userId: i, permissions: this.userPermissionsCache[i] })).save()
-        }
-    }
-
-    async sync(): Promise<void> {   
-        for (const i of new Set(this.delta)) {
-            await Permissions.updateOne({ userId: i }, { $set: { permissions: this.userPermissionsCache[i] } })
-        }
-
-        (await Permissions.find({})).forEach(it => {
-            this.userPermissionsCache[it.userId!] = Array.from(it.permissions.values())
+    
+        await Permissions.updateOne({ userId: userIdentifier }, { 
+            $push: {
+                permissions: node
+            }
         })
     }
 
-    diff() {
-        return this.delta.length
+    async revoke(userIdentifier: string, node: string): Promise<void> {
+        if (!(await this.exist(userIdentifier))) {
+            await new Permissions({ userId: userIdentifier, permissions: this.defaultPermissions }).save()
+        }
+    
+        await Permissions.updateOne({ userId: userIdentifier }, { 
+            $pull: {
+                permissions: node
+            }
+        })
+    }
+
+    async list(userIdentifier: string): Promise<string[]> {
+        const user = await this.getUser(userIdentifier)
+
+        return user.permissions
+    }
+
+    async save(): Promise<void> { }
+
+    async sync(): Promise<void> { }
+
+    async getUser(uid: string) {
+        let r = await Permissions.findOne({ userId: uid})
+        if (r) {
+            return r
+        }
+
+        r = new Permissions({ userId: uid, permissions: this.defaultPermissions })
+        await r.save()
+
+        return r
+    }
+
+    async exist(uid: string) {
+        return (await Permissions.count({ userId: uid })) > 0
     }
 }
