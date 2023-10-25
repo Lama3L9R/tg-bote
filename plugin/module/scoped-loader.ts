@@ -1,0 +1,126 @@
+import fs from 'fs'
+import path from 'path'
+import { createRequire } from 'node:module'
+import { BotePluginModule } from '../plugin'
+
+export class DynamicModule {
+    public readonly loader: PluginLoader
+    public readonly name: string
+    public readonly fileName: string
+    public readonly mod: BotePluginModule
+    public readonly esmName: string
+
+    constructor(loader: PluginLoader, name: string, mod: BotePluginModule, esmName: string) {
+        this.loader = loader
+        this.name = name
+        this.fileName = path.basename(name)
+        this.mod = mod
+        this.esmName = esmName
+    }
+    
+}
+
+export class PluginLoader {
+    protected baseLocation: string
+    protected registry: Map<string, DynamicModule> = new Map()
+    
+    constructor(baseLocation: string = "./plugins") {
+        this.baseLocation = baseLocation
+
+        if (!fs.existsSync(baseLocation)) {
+            fs.mkdirSync(baseLocation)
+        }
+    }
+
+    setBaseLocation(newLoc: string) {
+        this.baseLocation = newLoc
+    }
+
+    async loadAll() {
+        return Promise.all(fs.readdirSync(this.baseLocation).map(it => {
+            if (it.endsWith(".disable")) {
+                return null
+            }
+            
+            if (!it.endsWith(".ts") && !it.endsWith(".js")) {
+                return null
+            }
+
+            return this.loadAnyModule(path.resolve(this.baseLocation, it))
+        }).filter(Boolean))
+    }
+
+    async invokeMainAll() {
+        await Promise.all(Array.from(this.registry.values()).map(it => it.mod.main()))
+    }
+    
+    async loadAnyModule(mod: string): Promise<BotePluginModule | null> {
+        if (mod.endsWith(".disable")) {
+            return null
+        }
+        
+        if (fs.lstatSync(mod).isDirectory()) {
+            return this.loadDirectoryModule(mod)
+        }
+
+        const esmName = path.relative(__dirname, mod).replace(".ts", "").replace(".js", "")
+        const module = await import(esmName)
+
+        const name = module.default.plugin.name
+        this.registry.set(name, new DynamicModule(this, name, module.default, esmName))
+
+        return module.default
+    }
+
+    protected async loadDirectoryModule(moduleDir: string): Promise<BotePluginModule | null> {
+        const files = fs.readdirSync(moduleDir)
+        let mainFile: string = ""
+        if (files.includes("index.ts")) {
+            mainFile = "index.ts"
+        } else if (files.includes("index.js")) {
+            mainFile = "index.js"
+        } else if (files.includes("package.json")) {
+            const pkgInfo = JSON.parse(fs.readFileSync(path.join(moduleDir, "package.json")).toString())
+            if ("main" in pkgInfo && typeof pkgInfo.main === 'string') {
+                mainFile = pkgInfo.main
+            } else {
+                throw new Error("No main file was found! Name your main file as index.ts(js) or put a main field in your package.json that points to your main file.")
+            }
+        } else {
+            throw new Error("No main file was found! Name your main file as index.ts(js) or put a main field in your package.json that points to your main file.")
+        }
+
+        return this.loadAnyModule(path.relative(this.baseLocation, path.resolve(moduleDir, mainFile)))
+    }
+
+    unloadModule(name: string) {
+        if (this.registry.has(name)) {
+            const mod = this.registry.get(name)!
+            delete require.cache[mod.esmName]
+            this.registry.delete(name)
+        }
+    }
+
+    requirePlugin(name: string): any | null {
+        return this.registry.get(name)?.mod.exports
+    }
+
+    protected getScopeFromString(str: string): string | null {
+        const splitter = str.indexOf(":")
+        if (!splitter) {
+            return null
+        }
+
+        return str.substring(0, splitter)
+    }
+
+    protected getModuleFromString(str: string): string | null {
+        const splitter = str.indexOf(":")
+        if (!splitter) {
+            return null
+        }
+
+        return str.substring(splitter + 1)
+    }
+
+}

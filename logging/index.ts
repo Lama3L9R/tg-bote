@@ -1,6 +1,6 @@
+import { BotePluginModule } from "../plugin/plugin"
 import { ConsoleLoggerIO, FileLoggerIO, IOMux, Logger, MasterLoggerIO } from "./logger"
 import fs from 'fs'
-import { PluginDescription } from '../plugin'
 
 export default class Logging {
     private static defaultInstance?: Logger
@@ -25,7 +25,7 @@ export default class Logging {
         Logging.defaultInstance?.error(err, msg)
     }
 
-    static getLogger(moduleName: string | PluginDescription) {
+    static getLogger(moduleName: string | BotePluginModule) {
         if (!Logging.defaultInstance) {
             throw new Error("Not init yet!")
         }
@@ -33,7 +33,7 @@ export default class Logging {
         if (typeof moduleName === "string") {
             return new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName)
         } else {
-            return new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName.name)
+            return new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName.plugin.displayName ?? moduleName.plugin.name)
         }
     }
 }

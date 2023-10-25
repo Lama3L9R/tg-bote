@@ -5,36 +5,21 @@ import { Events } from './events'
 
 import Logging from './logging'
 import { BotePermissionManagerImpl } from './permission/permission-manager'
-import { IPluginManager, PluginManager } from './plugin'
 import { BoteMasterDispatcher } from './plugin/command/command-telegraf-middleware'
+import { PluginLoader } from './plugin/module/scoped-loader'
 
 export type BoteConfig = {
-    pluginsFolder?: string
+    pluginsFolder?: string,
+    mongodb: string, 
+    token: string
 }
 
-let telegraf: Telegraf | null = null
-let masterCommandDispatcher = new BoteMasterDispatcher()
-const permissionManager = new BotePermissionManagerImpl(["pem.deny.*", "pm.deny.*"])
+export let telegraf: Telegraf | null = null
+export let masterCommandDispatcher = new BoteMasterDispatcher()
+export const permissionManager = new BotePermissionManagerImpl(["pem.deny.*", "pm.deny.*"])
+export const pluginManager = new PluginLoader()
 
-export function getTelegraf() {
-    return telegraf!
-}
-
-export function getMasterDispatcher() {
-    return masterCommandDispatcher!
-}
-
-export const getLogger = Logging.getLogger
-
-export function getPermissionManager() {
-    return permissionManager
-}
-
-export function getPluginManager(): IPluginManager {
-    return PluginManager
-}
- 
-export async function launch(mongodb: string, token: string, config: BoteConfig = { }) {
+export async function launch({ pluginsFolder, mongodb, token }: BoteConfig) {
     telegraf = new Telegraf(token)
     if (mongodb.length != 0) {
         await mongoose.connect(mongodb)
@@ -52,7 +37,11 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
     Logging.init()
     Logging.info("Loading plugins...")
 
-    await PluginManager.loadPlugins(config.pluginsFolder ?? "./plugins")
+    if (pluginsFolder) {
+        pluginManager.setBaseLocation(pluginsFolder)
+    }
+    await pluginManager.loadAll()
+    await pluginManager.invokeMainAll()
     
     Logging.info("Invoke startup event")
     await Events.onStartup.call(null, null)
@@ -65,16 +54,18 @@ export async function launch(mongodb: string, token: string, config: BoteConfig 
         Logging.error({ name: "UnknownTelegrafError", message: "unknown", ...(err as any) })
     })
 
-    telegraf.on(["text"], getMasterDispatcher())
+    process.once('SIGINT', () => telegraf!.stop('SIGINT'))
+    process.once('SIGTERM', () => telegraf!.stop('SIGTERM'))
+
+    telegraf.on(["text"], masterCommandDispatcher)
 
     Logging.info("Invoke postStartup event")
     await Events.onPostStartup.call(null, null)
 
     Logging.info("Connecting to Telegram Bot API...")
-    await telegraf.launch()
+    telegraf.launch()
     Logging.info(`Bote launched with token: ${replaceRange(token.split(""), 20, 30, "*").join("")}`)
 
-    ;(globalThis as any)["I"] = module.exports
     await Events.onFinalization.call(null, null)
 }
 
