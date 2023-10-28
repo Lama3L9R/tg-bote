@@ -1,5 +1,4 @@
-import { CommandHandler, MaybePromise, TelegrafCommandContext } from '..'
-import Logging from '../../logging'
+import { CommandHandler, TelegrafCommandContext } from '../utils/common-types'
 
 export class Command <RTN> { 
     private name: string

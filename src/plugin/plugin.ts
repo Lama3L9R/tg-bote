@@ -1,8 +1,9 @@
-import Logging from "../logging"
+import { Logging } from '../logging'
 import { Logger } from "../logging/logger"
-import { EventHandlerRef } from "./event-system"
+import { PermissionManager } from "../permission/permission-manager"
+import { EventHandlerRef } from "../event/event-system"
+import { StringMapLike } from "../utils/common-types"
 
-export type PluginManagementFlag = "DisallowReload" | "DisallowUnload" | "LibraryPlugin"
 export type ScopeDesciptor = `${string}:${string}`
 
 export interface PluginConfig {
@@ -18,14 +19,6 @@ export interface PluginConfig {
      * Bad name: icu*lama dp7management!games-MyM1n1Game
      * 
      * Good name: icu.lama.dp7management.games.MyMiniGame
-     * 
-     * Plugin names are scoped names.
-     * Schoped names are something like this:
-     * 
-     * `Scope:Name`
-     * 
-     * Default scope for plugin is plugin. You don't need add `plugin:` for plugin names.
-     * Unless you are going to use a seperate scope!
      * 
      */
     name: string
@@ -57,22 +50,18 @@ export interface PluginConfig {
      * For npm libraries please use `npm` scope.
      * 
      * Example plugin dependency: `icu.lama.example.ExamplePlugin`
-     * Example plugin dependency with scope(Optional, since the default scope is plugin): `plugin:icu.lama.example.ExamplePlugin` 
-     * Example npm dependency: `npm:tg-bote`
+     * Example npm dependency: `npm:tg-bote` (not implemented yet)
      */
     dependencies?: string[]
-
-    /**
-     * If your plugin somehow cannot unload or reload please add flags at here.
-     */
-    flags?: PluginManagementFlag[]
 }
 
 export type PluginEntryPoint = Function & { pluginConfig?: PluginConfig, plugin?: BotePluginModule }
 
 export class PluginConstructor {
     private config: PluginConfig
-    private exports: { [key in string]: Function } = { }
+    private exports: StringMapLike<Function> = { }
+    private managed: StringMapLike<any> = { }
+    private lifeCycleHooks: StringMapLike<Function> = { }
 
     constructor(config: PluginConfig) {
         this.config = config
@@ -101,11 +90,15 @@ export class PluginConstructor {
             main: mainFn,
             registeredEvents: [],
             exports: this.exports,
+            managed: this.managed,
+            hooks: this.lifeCycleHooks,
+
             decorate(fn: Function) {
                 fn.bind(this)
 
                 return this
             },
+
             getLogger() {
                 return Logging.getLogger(this)
             }
@@ -151,13 +144,35 @@ export class PluginConstructor {
         }
         return this.exportNamed(fn.name, fn)
     }
+
+    /**
+     * Manage a framework wide service by you.
+     * 
+     * @param target The target that you wants to manage
+     * @param pm Your permission manager implmentation
+     */
+    public manage(target: 'permissions', pm: PermissionManager) {
+        this.managed[target] = pm
+    }
+
+    public onUnload(fn: () => void) {
+        this.lifeCycleHooks["onUnload"] = fn
+        return this
+    }
+
+    public onReload(fn: () => void) {
+        this.lifeCycleHooks["onReload"] = fn
+        return this
+    }
 }
 
 export interface BotePluginModule {
     plugin: PluginConfig
     main: PluginEntryPoint
-    exports: { [key in string]: any }
+    exports: StringMapLike<any>
     registeredEvents: EventHandlerRef[]
+    managed: StringMapLike<any>
+    hooks: StringMapLike<Function>
 
     decorate(fn: Function): BotePluginModule
     getLogger(): Logger

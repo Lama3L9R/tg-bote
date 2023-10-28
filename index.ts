@@ -1,14 +1,24 @@
-import { masterCommandDispatcher, permissionManager, pluginManager, telegraf, launch as launchBote, BoteConfig } from './bote'
-import Logging from './logging'
+import { masterCommandDispatcher, permissionManager, pluginManager, telegraf, launch as launchBote } from './src/bote'
+import { Logging } from './src/logging'
+import { BoteConfig } from './src/utils/config'
 
-export * from './plugin/event-system'
-export * from './plugin/plugin'
-export * from './logging/index'
-export * from './logging/logger'
-export * from './plugin/command/command-telegraf-middleware'
-export * from './plugin/module/scoped-loader'
-export * from './permission/permission-manager'
-export * from './events' 
+export * from './src/event/events'
+export * from './src/event/event-system'
+
+export * from './src/plugin/plugin'
+export * from './src/plugin/plugin-loader'
+
+export * from './src/logging/index'
+export * from './src/logging/logger'
+
+export * from './src/command/command-telegraf-middleware'
+export * from './src/command/command'
+
+export * from './src/permission/permission-manager'
+
+export * from './src/utils/common-types'
+export * from './src/utils/config'
+export * from './src/utils/promise'
 
 export namespace I {
     export const launch = launchBote

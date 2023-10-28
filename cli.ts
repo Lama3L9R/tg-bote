@@ -1,4 +1,5 @@
 import { program } from "commander";
+import { I } from ".";
 
 program
     .name("Bote")
@@ -8,8 +9,10 @@ program
 program.command("run")
     .option("-c, --config []", "Config file")
     .action(async (options) => {
-        const opts = options.config ?? "bote.config.js"
+        const opts = options.config ?? "bote.config.ts"
         const config = await import(opts)
 
         await I.launch(config.default)
     })
+
+program.parse(process.argv)

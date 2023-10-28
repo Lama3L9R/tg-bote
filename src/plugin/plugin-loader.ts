@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { createRequire } from 'node:module'
-import { BotePluginModule } from '../plugin'
+import { BotePluginModule } from './plugin'
 
 export class DynamicModule {
     public readonly loader: PluginLoader
@@ -50,8 +50,13 @@ export class PluginLoader {
         }).filter(Boolean))
     }
 
-    async invokeMainAll() {
+    /**
+     * Invoke main function of all plugins and return a map of plugin managed core features.
+     */
+    async invokeMainAll(): Promise<{ [key in string]: any }> {
         await Promise.all(Array.from(this.registry.values()).map(it => it.mod.main()))
+
+        return Array.from(this.registry.values()).map(it => it.mod.managed).reduce((acc, cur) => ({ ...acc, ...cur }), {})
     }
     
     async loadAnyModule(mod: string): Promise<BotePluginModule | null> {

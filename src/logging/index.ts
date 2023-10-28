@@ -2,7 +2,7 @@ import { BotePluginModule } from "../plugin/plugin"
 import { ConsoleLoggerIO, FileLoggerIO, IOMux, Logger, MasterLoggerIO } from "./logger"
 import fs from 'fs'
 
-export default class Logging {
+export class Logging {
     private static defaultInstance?: Logger
 
     static init(logs: fs.PathLike = "./logs", levels?: string[]) {

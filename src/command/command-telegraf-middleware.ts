@@ -1,12 +1,16 @@
 import { MiddlewareFn, MiddlewareObj } from 'telegraf'
 import { MessageEntity } from 'telegraf/typings/core/types/typegram'
-import { TelegrafCommandContext } from '..'
-import { Events } from '../../events'
-import Logging from '../../logging'
+import { TelegrafCommandContext } from '../utils/common-types'
+import { Events } from '../event/events'
+import { Logging } from '../logging'
 import { Command } from './command'
+import { BotePluginModule } from '../plugin/plugin'
+import { I } from '../..'
+import { EventCommandProcess, EventMessageUpdate, EventPreCommandProcess } from '../event/events/updates'
+import { StringMapLike } from '../utils/common-types'
 
 export class BoteMasterDispatcher implements MiddlewareObj<TelegrafCommandContext> {
-    private commands: { [keys: string]: Command<any> } = { }
+    private commands: StringMapLike<PluginCommand> = { }
 
     middleware(): MiddlewareFn<TelegrafCommandContext> {
         return async (ctx) => {
@@ -68,6 +72,10 @@ export class BoteMasterDispatcher implements MiddlewareObj<TelegrafCommandContex
             if (event.cancelled) {
                 return Logging.event("CmdDispatchCancellation", textReal.join(""), `${ctx.message.chat.id}:${ctx.message.from.id}`)
             } else {
+                if (await I.getPermissionManager().rejectAction(new BoteCommandContext(ctx, this.commands[event.command], event.args))) {
+                    return Logging.event("CmdDispatchRejected", textReal.join("") + " | Permission denied", `${ctx.message.chat.id}:${ctx.message.from.id}`)
+                }
+
                 Logging.event("CmdDispatch", textReal.join(""), `${ctx.message.chat.id}:${ctx.message.from.id}`)
             }
 
@@ -81,41 +89,46 @@ export class BoteMasterDispatcher implements MiddlewareObj<TelegrafCommandContex
         }
     }
 
-    register(cmd: Command<any>) {
-        this.commands[cmd.getName()] = cmd
+    register(plugin: BotePluginModule, cmd: Command<any>) {
+        this.commands[cmd.getName()] = new PluginCommand(plugin, cmd)
     }
 
     deRegister(...cmd: string[]) {
         cmd.forEach(it => delete this.commands[it])
     }
-}
 
-export class EventPreCommandProcess {
-    cancelled: boolean = false
-    readonly ctx: TelegrafCommandContext
-    
-    constructor(ctx: TelegrafCommandContext) {
-        this.ctx = ctx
+    deRegisterAll(plugin: BotePluginModule) {
+        for (const i in this.commands) {
+            if (this.commands[i].plugin === plugin) {
+                delete this.commands[i]
+            }
+        }
     }
 }
 
-export class EventCommandProcess {
-    cancelled: boolean = false
-    readonly ctx: TelegrafCommandContext
-    command: string
-    args: string[]
+export class PluginCommand {
+    readonly plugin: BotePluginModule
+    readonly command: Command<any>
 
-    constructor(ctx: TelegrafCommandContext, command: string, args: string[]) {
+    constructor(plugin: BotePluginModule, command: Command<any>) {
+        this.plugin = plugin
+        this.command = command
+    }
+
+    dispatch(args: string[], ctx: TelegrafCommandContext) {
+        return this.command.dispatch(args, ctx)
+    }
+}
+
+export class BoteCommandContext {
+    readonly ctx: TelegrafCommandContext
+    readonly command: PluginCommand
+    readonly args: string[]
+
+    constructor(ctx: TelegrafCommandContext, command: PluginCommand, args: string[]) {
         this.ctx = ctx
         this.command = command
         this.args = args
     }
 }
 
-export class EventMessageUpdate {
-    ctx: TelegrafCommandContext
-
-    constructor(ctx: TelegrafCommandContext) {
-        this.ctx = ctx
-    }
-}

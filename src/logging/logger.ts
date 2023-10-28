@@ -4,13 +4,15 @@ import path from 'path'
 export class Logger {
     private registeredLevels: string[] = ["Event", "Info", "Error"] 
     private maxPadding = 8
+    private maxModuleNameLen: number
     private moduleName: string
     private io: LoggerIO
 
-    constructor(io: LoggerIO, levels: string[], moduleName: string) {
+    constructor(io: LoggerIO, levels: string[], moduleName: string, maxModuleNameLen?: number) {
         this.io = io
-        this.moduleName = moduleName
-        
+        this.maxModuleNameLen = maxModuleNameLen ?? 20
+        this.moduleName = this.shortifyModuleName(moduleName)
+
         levels.forEach(lvl => {
             if (this.registeredLevels.indexOf(lvl) !== -1) {
                 return
@@ -26,24 +28,24 @@ export class Logger {
     }
 
     event(event: string, msg: any, trigger: any) {
-        this.write(`${this.makePrefix("Event")} : <${event}> from ${(trigger + "").padEnd(25, " ")} -> ${msg}`)
+        this.write(`${this.makePrefix("Event")} :: <${event}> from ${(trigger + "").padEnd(25, " ")} -> ${msg}`)
     }
 
     info(msg: any) {
-        this.write(`${this.makePrefix("Info")} : ${msg}`)
+        this.write(`${this.makePrefix("Info")} :: ${msg}`)
     }
 
     log(level: any, msg: any) {
         if ((level !== undefined || level !== null) && msg === undefined) {
             this.info(level)
         } else {
-            this.write(`${this.makePrefix(level)} : ${msg}`)
+            this.write(`${this.makePrefix(level)} :: ${msg}`)
         }
     }
 
     error <T extends Error> (err: T, msg?: any) {
         const writeErr = (t: any) => {
-            this.write(`${this.makePrefix("Error")} : ${t}`)
+            this.write(`${this.makePrefix("Error")} :: ${t}`)
         }
         
         writeErr(`${err.name} thrown: ${err.message}`)
@@ -63,7 +65,7 @@ export class Logger {
             throw new Error("No such level!")
         }
 
-        return `${this.getTime()} [${this.moduleName}] ${level.padEnd(this.maxPadding)}`
+        return `[${this.getTime()}] [${this.moduleName}] ${level.padEnd(this.maxPadding)}`
 
     }
 
@@ -76,6 +78,28 @@ export class Logger {
         return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`
     }
 
+    private shortifyModuleName(moduleName: string): string {
+        let name = moduleName
+
+        if (moduleName.indexOf(".")) {
+            const moduleNameParts: string[] = []
+            const parts = moduleName.split(".")
+
+            for (let i = 0; i < parts.length - 1; i ++) {
+                moduleNameParts.push(parts[i][0])
+            }
+            moduleNameParts.push(parts[parts.length - 1])
+            name = moduleNameParts.join(".")
+        }
+
+        if (name.length > this.maxModuleNameLen) {
+            return name.substring(0, this.maxModuleNameLen - 3) + "..."
+        } else if (name.length < this.maxModuleNameLen) {
+            return name.padEnd(this.maxModuleNameLen, " ")
+        }
+
+        return name
+    }
 }
 
 export interface LoggerIO {

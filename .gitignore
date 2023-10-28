@@ -9,6 +9,6 @@ yarn-error.log
 **/*.d.ts
 **/*.ts.map
 
-bootstrap.ts
+bote.config.ts
 
 dist
