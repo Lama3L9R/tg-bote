@@ -1,4 +1,4 @@
-import { MaybePromise } from '../plugin'
+import { MaybePromise } from '../utils/common-types'
 import { BotePluginModule } from '../plugin/plugin'
 
 export type EventHandlerFn<EventArg, Sender> = (args: EventArg, sender: Sender) => MaybePromise<void>
