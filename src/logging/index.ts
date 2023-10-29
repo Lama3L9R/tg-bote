@@ -5,7 +5,7 @@ import fs from 'fs'
 export class Logging {
     private static defaultInstance?: Logger
 
-    static init(logs: fs.PathLike = "./logs", levels?: string[]) {
+    static init(logs: fs.PathLike = "./logs", levels: string[] = [], maxModuleNameLen: number = 20) {
         Logging.defaultInstance = new Logger(new IOMux(new FileLoggerIO(logs), new ConsoleLoggerIO()), levels ?? [], "Bote")
     }
 

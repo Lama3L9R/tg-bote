@@ -10,9 +10,14 @@ export interface BoteConfig {
      */
     storage?: StorageSettings
 
-    telegram: OtherTelegramSettings
+    telegram?: OtherTelegramSettings
 
     devMode: boolean
+
+    /**
+     * Max length of module name in logging.
+     */
+    loggingModuleLength?: number
 }
 
 export interface StorageSettings {

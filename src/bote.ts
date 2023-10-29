@@ -1,7 +1,7 @@
 import fs from 'fs'
 
 import mongoose from 'mongoose'
-import { Composer, Telegraf } from 'telegraf'
+import { Telegraf } from 'telegraf'
 import { Events } from './event/events'
 
 import { Logging } from './logging'
@@ -19,7 +19,7 @@ export const pluginManager = new PluginLoader()
 export async function launch(config: BoteConfig) {
     telegraf = new Telegraf(config.credentials.telegramBoteToken, {
         telegram: {
-            apiRoot: config.telegram.telegramAPI,
+            apiRoot: config.telegram?.telegramAPI,
         }
     })
 
@@ -27,7 +27,7 @@ export async function launch(config: BoteConfig) {
         await mongoose.connect(config.credentials.mongodbConnectionURL)
     }
 
-    Logging.init()
+    Logging.init(config.storage?.programLog, [], config.loggingModuleLength)
     Logging.info("Loading plugins...")
 
     if (config.storage?.plugins) {
@@ -59,7 +59,7 @@ export async function launch(config: BoteConfig) {
     Logging.info("Invoke postStartup event")
     await Events.onPostStartup.call(null, null)
 
-    if (config.telegram.useWebhook) {
+    if (config.telegram?.useWebhook) {
         const webhookConfig = config.telegram.useWebhook
 
         telegraf.launch({
