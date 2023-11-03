@@ -65,7 +65,7 @@ export class Logger {
             throw new Error("No such level!")
         }
 
-        return `[${this.getTime()}] [${this.moduleName}] ${level.padEnd(this.maxPadding)}`
+        return `[${this.getTime()}] ${this.moduleName} ${level.padEnd(this.maxPadding)}`
 
     }
 

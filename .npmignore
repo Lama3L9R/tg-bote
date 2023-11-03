@@ -1,0 +1,7 @@
+.vscode
+logs
+plugins
+node_modules
+yarn-error.log
+
+bote.config.ts
