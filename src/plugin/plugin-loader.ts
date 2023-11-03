@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { createRequire } from 'node:module'
 import { BotePluginModule } from './plugin'
+import { CentralEventManager, I } from '../..'
 
 export class DynamicModule {
     public readonly loader: PluginLoader
@@ -98,12 +99,38 @@ export class PluginLoader {
         return this.loadAnyModule(path.relative(this.baseLocation, path.resolve(moduleDir, mainFile)))
     }
 
-    unloadModule(name: string) {
+    unloadModule(name: string): string | null {
         if (this.registry.has(name)) {
             const mod = this.registry.get(name)!
-            delete require.cache[mod.esmName]
+        
+            if (mod.mod.hooks.onUnload) { 
+                mod.mod.hooks.onUnload()
+            }
+            // Remove all references.
+            I.getMasterDispatcher().deRegisterAll(mod.mod)
+            CentralEventManager.unsubscribeAll(mod.name)
+
+            const esmName = mod.esmName
+            delete require.cache[esmName]
             this.registry.delete(name)
+            
+            return esmName
         }
+
+        return null
+    }
+
+    async reloadPlugin(name: string) {
+        if (this.registry.has(name)) {
+            const mod = await this.loadAnyModule(this.unloadModule(name)!)
+
+            if (mod?.hooks.onReload) { 
+                mod.hooks.onReload()
+            }
+        }
+
+        throw new Error("Plugin is not yet loaded. It is impossible to reload a unloaded plugin.");
+        
     }
 
     requirePlugin(name: string): any | null {

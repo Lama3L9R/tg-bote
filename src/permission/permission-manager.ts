@@ -25,7 +25,7 @@ export class PermissionManagerDefaultImpl {
                 $gt: Date.now()
             }
         })
-        return !Boolean(perm)
+        return Boolean(perm)
     }
 
     async checkPermission(ctx: BoteCommandContext, node: string): Promise<boolean> {

@@ -54,6 +54,8 @@ export default defineConfig({
 
 ```
 
+**值得注意的是，在新版本中强制要求了生产环境使用 Webhook 模式。**
+
 ## 插件开发指南
 
 下面是一个示范插件
