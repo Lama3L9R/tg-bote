@@ -69,7 +69,7 @@ export class PluginLoader {
         }
 
         const esmName = path.relative(__dirname, mod).replace(".ts", "").replace(".js", "")
-        const module = await import(esmName)
+        const module = require(esmName)
 
         const name = module.default.plugin.name
         this.registry.set(name, new DynamicModule(this, name, module.default, esmName))

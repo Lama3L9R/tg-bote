@@ -13,7 +13,7 @@ import { pause } from './utils/promise'
 
 export let telegraf: Telegraf | null = null
 export let masterCommandDispatcher = new BoteMasterDispatcher()
-export let permissionManager: PermissionManager = new PermissionManagerDefaultImpl()
+export let permissionManager: PermissionManager
 export const pluginManager = new PluginLoader()
 
 export async function launch(config: BoteConfig) {
@@ -38,6 +38,8 @@ export async function launch(config: BoteConfig) {
     
     if (managedServices.permissionManager) {
         permissionManager = managedServices.permissionManager
+    } else {
+        permissionManager = new PermissionManagerDefaultImpl()
     }
 
     Logging.info("Invoke startup event")

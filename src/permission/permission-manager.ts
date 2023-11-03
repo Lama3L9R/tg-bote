@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import { Logging } from '../logging'
 import { BoteCommandContext } from '../command/command-telegraf-middleware'
 
 export interface PermissionManager {
@@ -10,7 +9,7 @@ export interface PermissionManager {
 }
 
 export class PermissionManagerDefaultImpl {
-    private static readonly PermissionsDB = mongoose.model("permissions", new mongoose.Schema({
+    private readonly PermissionsDB = mongoose.model("permissions", new mongoose.Schema({
         group: Number,
         uid: Number,
         node: String,
@@ -18,7 +17,7 @@ export class PermissionManagerDefaultImpl {
     }))
 
     async rejectAction(ctx: BoteCommandContext): Promise<boolean> {
-        const perm = await PermissionManagerDefaultImpl.PermissionsDB.findOne({ 
+        const perm = await this.PermissionsDB.findOne({ 
             group: ctx.ctx.chat.id, 
             uid: ctx.ctx.from.id, 
             node: `${ctx.command}.deny`, 
@@ -30,7 +29,7 @@ export class PermissionManagerDefaultImpl {
     }
 
     async checkPermission(ctx: BoteCommandContext, node: string): Promise<boolean> {
-        const perms = await PermissionManagerDefaultImpl.PermissionsDB.find({ 
+        const perms = await this.PermissionsDB.find({ 
             group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, 
             expire: {
                 $gt: Date.now()
@@ -56,17 +55,17 @@ export class PermissionManagerDefaultImpl {
     }
 
     async grant(ctx: BoteCommandContext, node: string): Promise<void> {
-        const perm = await PermissionManagerDefaultImpl.PermissionsDB.findOne({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node })
+        const perm = await this.PermissionsDB.findOne({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node })
         if (perm) {
             perm.expire = 0
             await perm.save()
         } else {
-            await new PermissionManagerDefaultImpl.PermissionsDB({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node, expire: 0 }).save()
+            await new this.PermissionsDB({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node, expire: 0 }).save()
         }
     }
 
     async revoke(ctx: BoteCommandContext, node: string): Promise<void> {
-        const perm = await PermissionManagerDefaultImpl.PermissionsDB.findOne({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node })
+        const perm = await this.PermissionsDB.findOne({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node })
         if (perm) {
             perm.expire = Date.now()
             await perm.save()
