@@ -4,10 +4,10 @@ plugins
 node_modules
 yarn-error.log
 
-**/*.js
-**/*.js.map
-**/*.d.ts
-**/*.ts.map
+dist/**/*.js
+dist/**/*.js.map
+dist/**/*.d.ts
+dist/**/*.ts.map
 
 bote.config.ts
 

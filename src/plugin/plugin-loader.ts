@@ -70,12 +70,21 @@ export class PluginLoader {
         }
 
         const esmName = path.relative(__dirname, mod).replace(".ts", "").replace(".js", "")
-        const module = require(esmName)
+        const pluginModule = require(esmName)
 
-        const name = module.default.plugin.name
-        this.registry.set(name, new DynamicModule(this, name, module.default, esmName))
+        const name = pluginModule.default.plugin.name
+        this.registry.set(name, new DynamicModule(this, name, pluginModule.default, esmName))
 
-        return module.default
+        return pluginModule.default
+    }
+
+    async loadESM(mod: string): Promise<BotePluginModule | null> {
+        const pluginModule = require(mod)
+
+        const name = pluginModule.default.plugin.name
+        this.registry.set(name, new DynamicModule(this, name, pluginModule.default, mod))
+
+        return pluginModule.default
     }
 
     protected async loadDirectoryModule(moduleDir: string): Promise<BotePluginModule | null> {
@@ -99,12 +108,12 @@ export class PluginLoader {
         return this.loadAnyModule(path.relative(this.baseLocation, path.resolve(moduleDir, mainFile)))
     }
 
-    unloadModule(name: string): string | null {
+    async unloadModule(name: string): Promise<string | null> {
         if (this.registry.has(name)) {
             const mod = this.registry.get(name)!
         
             if (mod.mod.hooks.onUnload) { 
-                mod.mod.hooks.onUnload()
+                await mod.mod.hooks.onUnload()
             }
             // Remove all references.
             I.getMasterDispatcher().deRegisterAll(mod.mod)
@@ -122,7 +131,7 @@ export class PluginLoader {
 
     async reloadPlugin(name: string) {
         if (this.registry.has(name)) {
-            const mod = await this.loadAnyModule(this.unloadModule(name)!)
+            const mod = await this.loadESM((await this.unloadModule(name))!)
 
             if (mod?.hooks.onReload) { 
                 mod.hooks.onReload()
