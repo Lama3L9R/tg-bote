@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { BoteCommandContext } from '../command/command-telegraf-middleware'
+import { BoteCommandContext } from '../command/controller'
 
 export interface PermissionManager {
     rejectAction(ctx: BoteCommandContext): Promise<boolean>
@@ -18,8 +18,8 @@ export class PermissionManagerDefaultImpl {
 
     async rejectAction(ctx: BoteCommandContext): Promise<boolean> {
         const perm = await this.PermissionsDB.findOne({ 
-            group: ctx.ctx.chat.id, 
-            uid: ctx.ctx.from.id, 
+            group: ctx.chat.id, 
+            uid: ctx.user.id,
             node: `${ctx.command}.deny`, 
             expire: {
                 $gt: Date.now()
@@ -30,7 +30,7 @@ export class PermissionManagerDefaultImpl {
 
     async checkPermission(ctx: BoteCommandContext, node: string): Promise<boolean> {
         const perms = await this.PermissionsDB.find({ 
-            group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, 
+            group: ctx.chat.id, uid: ctx.user.id, 
             expire: {
                 $gt: Date.now()
             }
@@ -55,17 +55,17 @@ export class PermissionManagerDefaultImpl {
     }
 
     async grant(ctx: BoteCommandContext, node: string): Promise<void> {
-        const perm = await this.PermissionsDB.findOne({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node })
+        const perm = await this.PermissionsDB.findOne({ group: ctx.chat.id, uid: ctx.user.id, node })
         if (perm) {
             perm.expire = 0
             await perm.save()
         } else {
-            await new this.PermissionsDB({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node, expire: 0 }).save()
+            await new this.PermissionsDB({ group: ctx.chat.id, uid: ctx.user.id, node, expire: 0 }).save()
         }
     }
 
     async revoke(ctx: BoteCommandContext, node: string): Promise<void> {
-        const perm = await this.PermissionsDB.findOne({ group: ctx.ctx.chat.id, uid: ctx.ctx.from.id, node })
+        const perm = await this.PermissionsDB.findOne({ group: ctx.chat.id, uid: ctx.user.id, node })
         if (perm) {
             perm.expire = Date.now()
             await perm.save()

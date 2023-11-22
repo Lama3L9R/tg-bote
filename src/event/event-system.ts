@@ -116,3 +116,11 @@ export class EventHandlerRef {
         return this._isRegistered
     }
 }
+
+export class CancelableEvent {
+    cancelled: boolean = false
+
+    cancel(): void {
+        this.cancelled = true
+    }
+}

@@ -1,6 +1,5 @@
 import fs from 'fs'
 import path from 'path'
-import { createRequire } from 'node:module'
 import { BotePluginModule } from './plugin'
 import { CentralEventManager, I } from '../..'
 

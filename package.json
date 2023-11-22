@@ -1,12 +1,11 @@
 {
   "name": "tg-bote",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "license": "Anti-996",
   "description": "Plugin style telegram bot framework based on telegraf",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": "./cli.js",
-
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Lama3L9R/tg-bote"
@@ -14,22 +13,21 @@
   "dependencies": {
     "commander": "^11.1.0",
     "mongoose": "^6.7.2",
-    "prompt-sync": "^4.2.0",
-    "tar": "^6.2.0",
-    "telegraf": "^4.15.0",
+    "node-telegram-bot-api": "^0.64.0",
     "ts-node": "^10.9.1"
   },
   "scripts": {
     "build:prod": "tsup",
     "clean": "rimraf --glob dist logs",
-    "build": "rimraf --glob dist logs && tsup"
+    "build": "rimraf --glob dist logs && tsup",
+    "dev": "ts-node devstartup.ts"
   },
   "devDependencies": {
-    "@types/prompt-sync": "^4.2.0",
-    "@types/tar": "^6.1.7",
     "@types/commander": "^2.12.2",
+    "@types/node-telegram-bot-api": "^0.63.0",
+    "@types/tar": "^6.1.7",
+    "rimraf": "^5.0.5",
     "tsup": "^7.2.0",
-    "typescript": "^4.8.4",
-    "rimraf": "^5.0.5"
+    "typescript": "^4.8.4"
   }
 }

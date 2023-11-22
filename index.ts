@@ -1,4 +1,4 @@
-import { masterCommandDispatcher, permissionManager, pluginManager, telegraf, launch as launchBote } from './src/bote'
+import { masterCommandDispatcher, permissionManager, pluginManager, telegram, launch as launchBote } from './src/bote'
 import { Logging } from './src/logging'
 import { BoteConfig } from './src/utils/config'
 
@@ -11,7 +11,7 @@ export * from './src/plugin/plugin-loader'
 export * from './src/logging/index'
 export * from './src/logging/logger'
 
-export * from './src/command/command-telegraf-middleware'
+export * from './src/command/controller'
 export * from './src/command/command'
 
 export * from './src/permission/permission-manager'
@@ -19,12 +19,14 @@ export * from './src/permission/permission-manager'
 export * from './src/utils/common-types'
 export * from './src/utils/config'
 export * from './src/utils/promise'
+export * from './src/utils/utils'
+export * from './src/utils/advanced-telegram-types'
 
 export namespace I {
     export const launch = launchBote
 
-    export function getTelegraf() {
-        return telegraf!
+    export function getTelegram() {
+        return telegram!
     }
     
     export function getMasterDispatcher() {

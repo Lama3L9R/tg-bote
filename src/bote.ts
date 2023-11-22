@@ -1,26 +1,47 @@
 import fs from 'fs'
 
 import mongoose from 'mongoose'
-import { Telegraf } from 'telegraf'
 import { Events } from './event/events'
 
 import { Logging } from './logging'
-import { BoteMasterDispatcher } from './command/command-telegraf-middleware'
+import { BoteMasterDispatcher } from './command/controller'
 import { PluginLoader } from './plugin/plugin-loader'
 import { PermissionManager, PermissionManagerDefaultImpl } from './permission/permission-manager'
 import { BoteConfig } from './utils/config'
 import { pause } from './utils/promise'
+import TelegramBot from 'node-telegram-bot-api'
+import { TelegramRawMessageUpdate } from './utils/common-types'
 
-export let telegraf: Telegraf | null = null
+export let telegram: TelegramBot
 export let masterCommandDispatcher = new BoteMasterDispatcher()
 export let permissionManager: PermissionManager
 export const pluginManager = new PluginLoader()
 
-export async function launch(config: BoteConfig) {
-    telegraf = new Telegraf(config.credentials.telegramBoteToken, {
-        telegram: {
-            apiRoot: config.telegram?.telegramAPI,
+function buildWebhookConfig(config: BoteConfig) {
+    if (config.telegram?.useWebhook) {
+        return {
+            port: config.telegram.useWebhook.port,
+            host: config.telegram.useWebhook.host,
+            key: config.telegram.useWebhook.tls.private,
+            cert: config.telegram.useWebhook.tls.public,
+            autoOpen: false,
+            https: {
+                cert: config.telegram.useWebhook.tls.public,
+                key: config.telegram.useWebhook.tls.private
+            }
         }
+    } else {
+        return undefined
+    }
+}
+
+export async function launch(config: BoteConfig) {
+    telegram = new TelegramBot(config.credentials.telegramBoteToken, {
+        baseApiUrl: config.telegram?.telegramAPI,
+        polling: {
+            autoStart: false
+        },
+        webHook: buildWebhookConfig(config)
     })
 
     if (config.credentials.mongodbConnectionURL.length != 0) {
@@ -45,18 +66,7 @@ export async function launch(config: BoteConfig) {
     Logging.info("Invoke startup event")
     await Events.onStartup.call(null, null)
 
-    telegraf.catch((err, ctx) => {
-        if (!err) {
-            return
-        }
-
-        Logging.error({ name: "UnknownTelegrafError", message: "unknown", ...(err as any) })
-    })
-
-    process.once('SIGINT', shutdown)
-    process.once('SIGTERM', shutdown)
-
-    telegraf.on(["text"], masterCommandDispatcher)
+    setupEvents()
 
     Logging.info("Invoke postStartup event")
     await Events.onPostStartup.call(null, null)
@@ -64,23 +74,12 @@ export async function launch(config: BoteConfig) {
     if (config.telegram?.useWebhook) {
         const webhookConfig = config.telegram.useWebhook
 
-        telegraf.launch({
-            webhook: {
-                domain: webhookConfig.domain,
-                host: webhookConfig.host,
-                path: webhookConfig.path,
-                port: webhookConfig.port,
-                secretToken: webhookConfig.secretToken,
-
-                tlsOptions: {
-                    cert: fs.readFileSync(webhookConfig.tls.public),
-                    key: fs.readFileSync(webhookConfig.tls.private),
-                }
-            }
+        await telegram.setWebHook(`${webhookConfig.domain}`, {
+            certificate: webhookConfig.tls.public
         })
 
         Logging.info("Connecting to Telegram Bot API with webhook enabled...")
-
+        await telegram.openWebHook()
     } else {
         if (!config.devMode) {
             Logging.info("< WARNING > PRODUCTION MODE DETECTED! PLEASE ENBALE WEBHOOKS! NOW TIMEOUT 20s TO LET YOU THINK ABOUT IT.")
@@ -91,8 +90,8 @@ export async function launch(config: BoteConfig) {
             }
         }
 
-        telegraf.launch()
         Logging.info("Connecting to Telegram Bot API...")
+        await telegram.startPolling()
     }
 
     Logging.info(`Bote launched with token: ${replaceRange(config.credentials.telegramBoteToken.split(""), 20, 30, "*").join("")}`)
@@ -113,8 +112,42 @@ function replaceRange <T> (arr: T[], begin: number, end: number, data: T): T[] {
     return result
 }
 
-export async function shutdown(sig?: NodeJS.Signals) {
-    await Events.onBoteShutdown.call(null, null)
+function setupEvents() {
+    process.once('SIGINT', shutdown)
+    process.once('SIGTERM', shutdown)
 
-    telegraf!.stop(sig ?? 'SIGTERM')
+    telegram.addListener('polling_error', (err) => {
+        Events.onBotError.call(null, err)
+        Logging.error(err)
+    })
+
+    telegram.addListener('webhook_error', (err) => {
+        Events.onBotError.call(null, err)
+        Logging.error(err)
+    })
+
+    telegram.on('message', async (msg) => {
+        if (msg.from) {
+            await masterCommandDispatcher.handleUpdate(<TelegramRawMessageUpdate>msg)
+        } else {
+            // Handle the case when 'msg.from' is undefined
+            console.log("Message 'from' is undefined.")
+        }
+    })
+}
+ 
+export async function shutdown(sig?: NodeJS.Signals) {
+    await Events.onBoteShutdown.call(null, sig ?? null)
+
+    if (telegram?.isPolling()) {
+        await telegram.stopPolling()
+    }
+
+    if (telegram?.hasOpenWebHook()) {
+        await telegram.closeWebHook()
+    }
+
+    if (mongoose.connection.readyState === 1) {
+        await mongoose.connection.close()
+    }
 }
