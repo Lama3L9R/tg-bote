@@ -1,8 +1,6 @@
-import { Context, NarrowedContext } from "telegraf";
+import TelegramBot from 'node-telegram-bot-api'
+import https from 'node:https'
 
-
-import { Update } from "telegraf/typings/core/types/typegram";
-import { MountMap } from "telegraf/typings/telegram-types";
 
 export type MaybePromise<RTN> = Promise<RTN> | RTN
 export type NullLike = null | undefined
@@ -16,5 +14,15 @@ export type RequiredFor<Type, Keys extends keyof any> = {
     [keys in Exclude<keyof Type, Keys>]?: Type[keys]
 } & { [keys in Extract<keyof Type, Keys>]: Type[keys] }
 
-export type TelegrafCommandContext = NarrowedContext<Context<Update>, MountMap["text"]>
-export type CommandHandler <RTN> = (ctx: TelegrafCommandContext, args: string[]) => MaybePromise<RTN>
+export type TelegramBotWebhookCfg = {
+    host?: string | undefined;
+    port?: number | undefined;
+    key?: string | undefined;
+    cert?: string | undefined;
+    pfx?: string | undefined;
+    autoOpen?: boolean | undefined;
+    https?: https.ServerOptions | undefined;
+    healthEndpoint?: string | undefined;
+}
+
+export type TelegramRawMessageUpdate = TelegramBot.Message & { from: TelegramBot.User }

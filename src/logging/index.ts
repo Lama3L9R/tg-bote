@@ -4,6 +4,7 @@ import fs from 'fs'
 
 export class Logging {
     private static defaultInstance?: Logger
+    private static moduleLoggers = new Map<string, Logger>()
 
     static init(logs: fs.PathLike = "./logs", levels: string[] = [], maxModuleNameLen: number = 20) {
         Logging.defaultInstance = new Logger(new IOMux(new FileLoggerIO(logs), new ConsoleLoggerIO()), levels ?? [], "Bote")
@@ -25,15 +26,25 @@ export class Logging {
         Logging.defaultInstance?.error(err, msg)
     }
 
-    static getLogger(moduleName: string | BotePluginModule) {
+    static getLogger(moduleName: string | BotePluginModule): Logger {
         if (!Logging.defaultInstance) {
             throw new Error("Not init yet!")
         }
 
+        const internIdentifier = typeof moduleName === "string" ? moduleName : moduleName.plugin.name
+
+        if (this.moduleLoggers.has(internIdentifier)) {
+            return this.moduleLoggers.get(internIdentifier)!
+        }
+
         if (typeof moduleName === "string") {
-            return new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName)
+            const logger = new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName)
+            this.moduleLoggers.set(internIdentifier, logger)
+            return logger
         } else {
-            return new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName.plugin.displayName ?? moduleName.plugin.name)
+            const logger = new Logger(new MasterLoggerIO(Logging.defaultInstance), [], moduleName.plugin.displayName ?? moduleName.plugin.name)
+            this.moduleLoggers.set(internIdentifier, logger)
+            return logger
         }
     }
 }

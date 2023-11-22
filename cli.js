@@ -1,5 +1,5 @@
 const { program } = require("commander")
-const { I } = require("./dist")
+const { I } = require(".")
 const { register } = require("ts-node")
 const path = require("path")
 
@@ -14,8 +14,8 @@ register({
 
 program
     .name("Bote")
-    .description("A Plugin based Telegram bot framework")
-    .version("2.0.0")
+    .description("A Plugin based Telegram bot framework (nta backend)")
+    .version("2.1.0")
 
 program.command("run")
     .option("-c, --config []", "Config file")
