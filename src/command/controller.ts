@@ -127,22 +127,59 @@ export class PluginCommand {
 export class BoteCommandContext {
     readonly update: TelegramRawMessageUpdate
     readonly chat: TelegramChat
-    readonly user: TelegramUser
+    readonly sender: TelegramUser
     readonly command: PluginCommand
     readonly args: string[]
 
     constructor(update: TelegramRawMessageUpdate, command: PluginCommand, args: string[]) {
         this.update = update
         this.chat = new TelegramChat(update.chat)
-        this.user = new TelegramUser(update.from, this.chat)
+        this.sender = new TelegramUser(update.from, this.chat)
         this.command = command
         this.args = args
     }
 
     reply(text: string) {
         return I.getTelegram().sendMessage(this.chat.id, escapeMarkdownV2(text), {
+            parse_mode: "MarkdownV2",
             reply_to_message_id: this.update.message_id
         })
+    }
+
+    replyHTML(text: string) {
+        return I.getTelegram().sendMessage(this.chat.id, text, {
+            parse_mode: "HTML",
+            reply_to_message_id: this.update.message_id
+        })
+    }
+
+    replyRaw(text: string) {
+        return I.getTelegram().sendMessage(this.chat.id, text, {
+            reply_to_message_id: this.update.message_id
+        })
+    }
+
+    replyParsed(text: string, parse: "MarkdownV2" | "Markdown" | "HTML") {
+        return I.getTelegram().sendMessage(this.chat.id, text, {
+            parse_mode: parse,
+            reply_to_message_id: this.update.message_id
+        })
+    }
+
+    sendText(text: string) {
+        return I.getTelegram().sendMessage(this.chat.id, escapeMarkdownV2(text), {
+            parse_mode: "MarkdownV2"
+        })
+    }
+
+    sendHTML(text: string) {
+        return I.getTelegram().sendMessage(this.chat.id, text, {
+            parse_mode: "HTML"
+        })
+    }
+
+    sendRaw(text: string) {
+        return I.getTelegram().sendMessage(this.chat.id, text)
     }
 }
 

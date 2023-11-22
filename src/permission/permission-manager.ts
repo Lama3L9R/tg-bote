@@ -19,7 +19,7 @@ export class PermissionManagerDefaultImpl {
     async rejectAction(ctx: BoteCommandContext): Promise<boolean> {
         const perm = await this.PermissionsDB.findOne({ 
             group: ctx.chat.id, 
-            uid: ctx.user.id,
+            uid: ctx.sender.id,
             node: `${ctx.command}.deny`, 
             expire: {
                 $gt: Date.now()
@@ -30,7 +30,7 @@ export class PermissionManagerDefaultImpl {
 
     async checkPermission(ctx: BoteCommandContext, node: string): Promise<boolean> {
         const perms = await this.PermissionsDB.find({ 
-            group: ctx.chat.id, uid: ctx.user.id, 
+            group: ctx.chat.id, uid: ctx.sender.id, 
             expire: {
                 $gt: Date.now()
             }
@@ -55,17 +55,35 @@ export class PermissionManagerDefaultImpl {
     }
 
     async grant(ctx: BoteCommandContext, node: string): Promise<void> {
-        const perm = await this.PermissionsDB.findOne({ group: ctx.chat.id, uid: ctx.user.id, node })
+        const perm = await this.PermissionsDB.findOne({ group: ctx.chat.id, uid: ctx.sender.id, node })
         if (perm) {
             perm.expire = 0
             await perm.save()
         } else {
-            await new this.PermissionsDB({ group: ctx.chat.id, uid: ctx.user.id, node, expire: 0 }).save()
+            await new this.PermissionsDB({ group: ctx.chat.id, uid: ctx.sender.id, node, expire: 0 }).save()
+        }
+    }
+
+    async grantManually(group: number, uid: number, node: string): Promise<void> {
+        const perm = await this.PermissionsDB.findOne({ group, uid, node })
+        if (perm) {
+            perm.expire = 0
+            await perm.save()
+        } else {
+            await new this.PermissionsDB({ group, uid, node, expire: 0 }).save()
         }
     }
 
     async revoke(ctx: BoteCommandContext, node: string): Promise<void> {
-        const perm = await this.PermissionsDB.findOne({ group: ctx.chat.id, uid: ctx.user.id, node })
+        const perm = await this.PermissionsDB.findOne({ group: ctx.chat.id, uid: ctx.sender.id, node })
+        if (perm) {
+            perm.expire = Date.now()
+            await perm.save()
+        }
+    }
+
+    async revokeManually(group: number, uid: number, node: string): Promise<void> {
+        const perm = await this.PermissionsDB.findOne({ group, uid, node })
         if (perm) {
             perm.expire = Date.now()
             await perm.save()

@@ -144,6 +144,10 @@ export class PluginLoader {
     requirePlugin(name: string): any | null {
         return this.registry.get(name)?.mod.exports
     }
+    
+    getPlugins() {
+        return this.registry
+    }
 
     protected getScopeFromString(str: string): string | null {
         const splitter = str.indexOf(":")

@@ -6,5 +6,7 @@
  * @returns escaped text
  */
 export function escapeMarkdownV2(text: string) {
-    return text.replace(/([[\]()><#+-=}{.!])/g, "\\$1")
+    // TODO: Fix bug when block is surrendered by ``` 
+    // return text.replace(/([[\]()><#+-=}{.!])/g, "\\$1") 
+    return text
 }
