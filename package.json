@@ -1,6 +1,6 @@
 {
   "name": "tg-bote",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "license": "Anti-996",
   "description": "Plugin style telegram bot framework based on telegraf",
   "main": "dist/index.js",
