@@ -8,7 +8,7 @@ export interface PermissionManager {
     revoke(ctx: BoteCommandContext, node: string): Promise<void>
 }
 
-export class PermissionManagerDefaultImpl {
+export class PermissionManagerDefaultImpl implements PermissionManager {
     private readonly PermissionsDB = mongoose.model("permissions", new mongoose.Schema({
         group: Number,
         uid: Number,
@@ -89,4 +89,17 @@ export class PermissionManagerDefaultImpl {
             await perm.save()
         }
     }
+}
+
+export class VoidPermissionManagerImpl implements PermissionManager {
+    async rejectAction(ctx: BoteCommandContext): Promise<boolean> {
+        return false
+    }
+    
+    async checkPermission(ctx: BoteCommandContext, node: string): Promise<boolean> {
+        return true
+    }
+    
+    async grant(ctx: BoteCommandContext, node: string): Promise<void> { }
+    async revoke(ctx: BoteCommandContext, node: string): Promise<void> { }
 }

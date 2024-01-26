@@ -6,7 +6,7 @@ import { Events } from './event/events'
 import { Logging } from './logging'
 import { BoteMasterDispatcher } from './command/controller'
 import { PluginLoader } from './plugin/plugin-loader'
-import { PermissionManager, PermissionManagerDefaultImpl } from './permission/permission-manager'
+import { PermissionManager, PermissionManagerDefaultImpl, VoidPermissionManagerImpl } from './permission/permission-manager'
 import { BoteConfig } from './utils/config'
 import { pause } from './utils/promise'
 import TelegramBot from 'node-telegram-bot-api'
@@ -60,7 +60,17 @@ export async function launch(config: BoteConfig) {
     if (managedServices.permissionManager) {
         permissionManager = managedServices.permissionManager
     } else {
-        permissionManager = new PermissionManagerDefaultImpl()
+        if (config.credentials.mongodbConnectionURL.length == 0) {
+            if (!config.devMode) {
+                Logging.error(new Error("Mongodb connection string is not set."), "Mongodb not available! If you are not going to use permission manager please set devMode to true.")
+            } else {
+                Logging.info("WARNING: Mongodb connection string is not set. Permission manager will not work.")
+                permissionManager = new VoidPermissionManagerImpl()
+            }
+        } else {
+            permissionManager = new PermissionManagerDefaultImpl()
+        }
+        
     }
 
     Logging.info("Invoke startup event")
